@@ -1,4 +1,4 @@
-module thehivesg/snapbots-core-sdk-go
+module github.com/thehivesg/snapbots-core-sdk-go
 
 go 1.23.2
 
