@@ -5,8 +5,9 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"thehivesg/snapbots-core-sdk-go/pkg/config"
 	"time"
+
+	"github.com/thehivesg/snapbots-core-sdk-go/pkg/config"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
