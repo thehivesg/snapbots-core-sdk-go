@@ -16,6 +16,7 @@ type NewJobRequest struct {
 type GetJobRequest struct {
 	BotID      string `json:"bot_id"`
 	ConsumerID string `json:"consumer_id"`
+	JobID      string `json:"job_id"`
 }
 
 type JobResponse struct {
