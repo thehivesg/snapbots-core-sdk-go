@@ -32,6 +32,13 @@ type JobResponse struct {
 	TotalBytes    int64         `json:"total_bytes"`
 }
 
+type UpdateJobRequest struct {
+	ConsumerID string      `json:"consumer_id"`
+	RequestID  string      `json:"request_id"`
+	Status     string      `json:"status"`
+	Payload    interface{} `json:"payload"`
+}
+
 type Service struct {
 	natsClient *nats.Conn
 }
@@ -78,4 +85,18 @@ func (s *Service) GetJob(request GetJobRequest) (JobResponse, error) {
 	}
 
 	return resp, nil
+}
+
+func (s *Service) UpdateJob(request UpdateJobRequest) error {
+	jobReqBytes, err := json.Marshal(request)
+	if err != nil {
+		return err
+	}
+
+	err = s.natsClient.Publish("v1.job.update", jobReqBytes)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
