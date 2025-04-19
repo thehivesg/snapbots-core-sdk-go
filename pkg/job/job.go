@@ -13,6 +13,11 @@ type NewJobRequest struct {
 	RequestID  string `json:"request_id"`
 }
 
+type GetJobRequest struct {
+	BotID      string `json:"bot_id"`
+	ConsumerID string `json:"consumer_id"`
+}
+
 type JobResponse struct {
 	ID            string        `json:"id"`
 	BotID         string        `json:"bot_id"`
@@ -43,6 +48,25 @@ func (s *Service) NewJob(request NewJobRequest) (JobResponse, error) {
 	}
 
 	respBytes, err := s.natsClient.Request("v1.job.request", jobReqBytes, 10*time.Second)
+	if err != nil {
+		return JobResponse{}, err
+	}
+
+	var resp JobResponse
+	if err := json.Unmarshal(respBytes.Data, &resp); err != nil {
+		return JobResponse{}, err
+	}
+
+	return resp, nil
+}
+
+func (s *Service) GetJob(request GetJobRequest) (JobResponse, error) {
+	jobReqBytes, err := json.Marshal(request)
+	if err != nil {
+		return JobResponse{}, err
+	}
+
+	respBytes, err := s.natsClient.Request("v1.job.get", jobReqBytes, 10*time.Second)
 	if err != nil {
 		return JobResponse{}, err
 	}
