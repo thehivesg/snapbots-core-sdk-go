@@ -42,7 +42,7 @@ func (s *Service) NewJob(request NewJobRequest) (JobResponse, error) {
 		return JobResponse{}, err
 	}
 
-	respBytes, err := s.natsClient.Request(request.BotID, jobReqBytes, 10*time.Second)
+	respBytes, err := s.natsClient.Request("v1.job.request", jobReqBytes, 10*time.Second)
 	if err != nil {
 		return JobResponse{}, err
 	}
