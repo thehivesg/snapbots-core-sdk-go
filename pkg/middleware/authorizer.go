@@ -27,6 +27,21 @@ type AuthResponse struct {
 	FuelAvailable int32 `json:"fuel_available"`
 }
 
+// AuthorizerOption defines a function that configures the authorizer middleware
+type AuthorizerOption func(*AuthorizerConfig)
+
+// AuthorizerConfig holds the configuration for the authorizer middleware
+type AuthorizerConfig struct {
+	BotID string // Optional BotID override
+}
+
+// WithBotID sets a custom BotID for the authorization request
+func WithBotID(botID string) AuthorizerOption {
+	return func(c *AuthorizerConfig) {
+		c.BotID = botID
+	}
+}
+
 func NewAuthorizerMiddleware(natsClient *nats.Conn) *AuthorizerMiddleware {
 	return &AuthorizerMiddleware{
 		natsClient: natsClient,
@@ -38,14 +53,27 @@ func NewAuthorizerMiddleware(natsClient *nats.Conn) *AuthorizerMiddleware {
 // This middleware is used to authorize a bot request by dispatching a request via NATS to the core service
 // The core service will then authorize the request and return a response via NATS
 // Authorizer returns the authorization middleware
-func (f *MiddlewareFactory) Authorizer() echo.MiddlewareFunc {
+func (f *MiddlewareFactory) Authorizer(opts ...AuthorizerOption) echo.MiddlewareFunc {
+	// Initialize default config
+	config := &AuthorizerConfig{}
+
+	// Apply options
+	for _, opt := range opts {
+		opt(config)
+	}
+
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			requestBody := AuthRequest{
-				BotID:     f.config.BotID,
+				BotID:     f.config.BotID, // Default to factory config
 				ApiKey:    c.Request().Header.Get("x-api-key"),
 				RequestID: uuid.New().String(),
 				Bytes:     c.Request().ContentLength,
+			}
+
+			// Override BotID if provided in options
+			if config.BotID != "" {
+				requestBody.BotID = config.BotID
 			}
 
 			// Set request id in the context
