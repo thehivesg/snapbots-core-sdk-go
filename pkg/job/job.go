@@ -2,6 +2,7 @@ package job
 
 import (
 	"encoding/json"
+	"net/http"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -17,6 +18,13 @@ type GetJobRequest struct {
 	BotID      string `json:"bot_id"`
 	ConsumerID string `json:"consumer_id"`
 	JobID      string `json:"job_id"`
+}
+
+type GetJobResponse struct {
+	Success bool        `json:"success"`
+	Code    int         `json:"code"`
+	Message string      `json:"message"`
+	Data    JobResponse `json:"data"`
 }
 
 type JobResponse struct {
@@ -68,20 +76,32 @@ func (s *Service) NewJob(request NewJobRequest) (JobResponse, error) {
 	return resp, nil
 }
 
-func (s *Service) GetJob(request GetJobRequest) (JobResponse, error) {
+func (s *Service) GetJob(request GetJobRequest) (GetJobResponse, error) {
 	jobReqBytes, err := json.Marshal(request)
 	if err != nil {
-		return JobResponse{}, err
+		return GetJobResponse{
+			Success: false,
+			Code:    http.StatusBadRequest,
+			Message: "Failed to marshal job get request",
+		}, err
 	}
 
 	respBytes, err := s.natsClient.Request("v1.job.get", jobReqBytes, 10*time.Second)
 	if err != nil {
-		return JobResponse{}, err
+		return GetJobResponse{
+			Success: false,
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to get job",
+		}, err
 	}
 
-	var resp JobResponse
+	var resp GetJobResponse
 	if err := json.Unmarshal(respBytes.Data, &resp); err != nil {
-		return JobResponse{}, err
+		return GetJobResponse{
+			Success: false,
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to unmarshal job get response",
+		}, err
 	}
 
 	return resp, nil
